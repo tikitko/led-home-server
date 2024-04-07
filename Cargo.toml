@@ -1,0 +1,8 @@
+[package]
+name = "led-home-server"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+rocket = { version = "0.5.0", features = ["json"] }
+magic-home-rs = { git = "https://github.com/tikitko/magic-home-rs.git" }
