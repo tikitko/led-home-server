@@ -3,10 +3,27 @@ extern crate rocket;
 
 use magic_home_rs::*;
 
-use rocket::http::Status;
-use rocket::serde::{Serialize, json::Json};
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::http::{Header, Status};
+use rocket::serde::{json::Json, Serialize};
+use rocket::{Request, Response};
 
 const IP: &'static str = "192.168.1.160:5577";
+
+pub struct CORS;
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to responses",
+            kind: Kind::Response,
+        }
+    }
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+    }
+}
 
 fn magic_home() -> MagicHome {
     let mut magic_home = MagicHome::new();
@@ -26,19 +43,22 @@ struct StateResponse {
 fn to_status<T, E>(result: Result<T, E>) -> Status {
     match result {
         Ok(_) => Status::Ok,
-        Err(_) => Status::InternalServerError
+        Err(_) => Status::InternalServerError,
     }
 }
 
 #[get("/state")]
 fn state() -> Result<Json<StateResponse>, Status> {
-    magic_home().state()
-        .map(|state| Json(StateResponse {
-            is_enabled: state.is_enabled,
-            red: state.red,
-            green: state.green,
-            blue: state.blue,
-        }))
+    magic_home()
+        .state()
+        .map(|state| {
+            Json(StateResponse {
+                is_enabled: state.is_enabled,
+                red: state.red,
+                green: state.green,
+                blue: state.blue,
+            })
+        })
         .map_err(|_| Status::InternalServerError)
 }
 
@@ -55,5 +75,6 @@ fn color(red: u8, green: u8, blue: u8) -> Status {
 #[launch]
 fn rocket() -> _ {
     rocket::build()
+        .attach(CORS)
         .mount("/", routes![state, power, color])
 }
