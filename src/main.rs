@@ -4,7 +4,7 @@ extern crate rocket;
 use magic_home_rs::*;
 
 use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::{Header, Status};
+use rocket::http::{Header, Method, Status};
 use rocket::serde::{json::Json, Serialize};
 use rocket::{Request, Response};
 
@@ -20,13 +20,13 @@ impl Fairing for CORS {
             kind: Kind::Response,
         }
     }
-    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+    async fn on_response<'r>(&self, request: &'r Request<'_>, response: &mut Response<'r>) {
+        if request.method() == Method::Options {
+            response.set_status(Status::NoContent);
+            response.set_header(Header::new("Access-Control-Allow-Methods", "PUT, GET"));
+            response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        }
         response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
-        response.set_header(Header::new(
-            "Access-Control-Allow-Methods",
-            "POST, PATCH, PUT, DELETE, HEAD, OPTIONS, GET",
-        ));
-        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
 }
