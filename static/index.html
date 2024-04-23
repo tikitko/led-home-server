@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react-color": "https://esm.sh/react-color@2.19.3"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode, useState, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
+import { SketchPicker } from 'react-color';
+
+let App = function App() {
+  const [color, setColor] = useState(null);
+
+  useEffect(() => {
+    fetch('/state')
+      .then(response => response.json())
+      .then(color => setColor({ r: color.red, g: color.green, b: color.blue }));
+  }, []);
+
+  return (
+    <div className="container">
+      {color ? <SketchPicker
+        class="child"
+        disableAlpha={ true }
+        color={ color }
+        onChangeComplete={ (color) => {
+          let rgb = color.rgb;
+          setColor(rgb);
+          fetch(`/color/${rgb.r}/${rgb.g}/${rgb.b}`, { method: 'PUT' });
+        } }
+      /> : ''}
+    </div>
+  );
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+.container {
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
+</html>

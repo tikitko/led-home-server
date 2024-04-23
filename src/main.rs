@@ -4,6 +4,7 @@ extern crate rocket;
 use magic_home_rs::*;
 
 use rocket::fairing::{Fairing, Info, Kind};
+use rocket::fs::{relative, FileServer};
 use rocket::http::{Header, Method, Status};
 use rocket::serde::{json::Json, Serialize};
 use rocket::{Request, Response};
@@ -83,4 +84,5 @@ fn rocket() -> _ {
     rocket::build()
         .attach(CORS)
         .mount("/", routes![state, power, color])
+        .mount("/", FileServer::from(relative!("static")))
 }
