@@ -31,9 +31,9 @@ let App = function App() {
   useEffect(() => {
     fetch('/state')
       .then(response => response.json())
-      .then(color => {
-        setIsEnabled(true);
-        setColor({ r: color.red, g: color.green, b: color.blue });
+      .then(state => {
+        setIsEnabled(state.is_enabled);
+        setColor({ r: state.red, g: state.green, b: state.blue });
       });
   }, []);
 
