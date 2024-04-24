@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>LED HOME CONTROL</title>
+</head>
 <body>
   <div id="root"></div>
 </body>
@@ -20,26 +25,39 @@ import { createRoot } from 'react-dom/client';
 import { SketchPicker } from 'react-color';
 
 let App = function App() {
+  const [isEnabled, setIsEnabled] = useState(false);
   const [color, setColor] = useState(null);
 
   useEffect(() => {
     fetch('/state')
       .then(response => response.json())
-      .then(color => setColor({ r: color.red, g: color.green, b: color.blue }));
+      .then(color => {
+        setIsEnabled(true);
+        setColor({ r: color.red, g: color.green, b: color.blue });
+      });
   }, []);
 
   return (
     <div className="container">
-      {color ? <SketchPicker
-        class="child"
-        disableAlpha={ true }
-        color={ color }
-        onChangeComplete={ (color) => {
-          let rgb = color.rgb;
-          setColor(rgb);
-          fetch(`/color/${rgb.r}/${rgb.g}/${rgb.b}`, { method: 'PUT' });
-        } }
-      /> : ''}
+      {color ? <div>
+        <div className="container">
+          <label className="switch">
+            <input type="checkbox" checked={isEnabled} onChange={() => {
+              setIsEnabled(!isEnabled);
+              fetch(`/power/${!isEnabled}`, {method: 'PUT'});
+            }}/>
+            <span className="slider round" style={{ '--color': `rgb(${color.r},${color.g},${color.b})` }}></span>
+          </label>
+        </div>
+        <SketchPicker class="child" disableAlpha={true} color={color} onChangeComplete={(newColor) => {
+          let rgb = newColor.rgb;
+          if (rgb !== color) {
+            setIsEnabled(true);
+            setColor(rgb);
+            fetch(`/color/${rgb.r}/${rgb.g}/${rgb.b}`, {method: 'PUT'});
+          }
+        }} />
+      </div> : ''}
     </div>
   );
 }
@@ -53,10 +71,69 @@ root.render(
 </script>
 <style>
 .container {
-  height: 400px;
+  padding: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: var(--color);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--color);
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
 }
 </style>
 </html>
